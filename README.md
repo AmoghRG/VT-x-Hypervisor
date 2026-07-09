@@ -382,13 +382,7 @@ Basic validation:
 - Keep WinDbg or DebugView open while testing.
 - Avoid running experimental hypervisor builds on a production system.
 
-This project was developed collaboratively as part of an academic systems programming project at NITK.
 
-### Team Members
-
-- Amogh R Gowda
-- Prabhav P
-- Chandan Gowda C
 
 ## References
 
