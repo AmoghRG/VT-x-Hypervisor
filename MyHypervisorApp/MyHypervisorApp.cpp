@@ -1,10 +1,46 @@
 #include <Windows.h>
 #include <conio.h>
-#include <iostream>  
+#include <iostream>
+#include <intrin.h>
+#include <vector>
+#include <algorithm>  
 #include "Definitions.h"
 #include "Configuration.h"
 
 using namespace std;
+
+void RunHypervisorBenchmarks(int iterations = 10000) {
+	LARGE_INTEGER freq, t1, t2;
+	QueryPerformanceFrequency(&freq);
+
+	std::vector<unsigned long long> cpuidCycles;
+	cpuidCycles.reserve(iterations);
+	int regs[4];
+	unsigned int aux = 0;
+	for (int i = 0; i < iterations; ++i) {
+		unsigned long long start = __rdtscp(&aux);
+		__cpuid(regs, 0);
+		unsigned long long end = __rdtscp(&aux);
+		cpuidCycles.push_back(end - start);
+	}
+	std::sort(cpuidCycles.begin(), cpuidCycles.end());
+	printf("\n[Bench] CPUID VM-Exit median: %llu cycles | p99: %llu cycles\n",
+		cpuidCycles[iterations / 2], cpuidCycles[(iterations * 99) / 100]);
+
+	std::vector<double> ioUs;
+	ioUs.reserve(1000);
+	for (int i = 0; i < 1000; ++i) {
+		QueryPerformanceCounter(&t1);
+		HANDLE h = CreateFileW(L"NUL", GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE,
+			NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+		QueryPerformanceCounter(&t2);
+		if (h != INVALID_HANDLE_VALUE) CloseHandle(h);
+		ioUs.push_back((double)(t2.QuadPart - t1.QuadPart) * 1e6 / freq.QuadPart);
+	}
+	std::sort(ioUs.begin(), ioUs.end());
+	printf("[Bench] CreateFileW median: %.2f us | p99: %.2f us\n", ioUs[500], ioUs[990]);
+}
+
 BOOLEAN IsVmxOffProcessStart; // Show whether the vmxoff process start or not
 
 string GetCpuid()
@@ -249,6 +285,8 @@ int main()
 		printf("[*] Thread Created successfully !!!");
 	}
 #endif
+
+	RunHypervisorBenchmarks();
 
 	printf("\n[*] Press any key to terminate the VMX operation...\n");
 
