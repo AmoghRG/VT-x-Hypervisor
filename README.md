@@ -384,6 +384,18 @@ Basic validation:
 
 
 
+## Benchmarking
+
+`MyHypervisorApp` includes a built-in microbenchmark harness (`RunHypervisorBenchmarks`) that measures:
+
+- **`CPUID` VM-exit round-trip latency** in CPU cycles using `__rdtscp` over 10,000 iterations (median and p99).
+- **`CreateFileW` (`NtCreateFile`) syscall latency** in microseconds using `QueryPerformanceCounter` over 1,000 iterations to quantify EPT hook overhead.
+
+| Metric | Baseline (No Hypervisor) | With Hypervisor + EPT Hook |
+| :--- | :---: | :---: |
+| `CPUID` round-trip (median / p99) | *Pending VM run* | *Pending VM run* |
+| `CreateFileW` (`NtCreateFile`) median / p99 | *Pending VM run* | *Pending VM run* |
+
 ## References
 
 - [VT-x Hypervisor Monitor](https://github.com/Prabhav-P2006/VT-x-Hypervisor-Monitor)
